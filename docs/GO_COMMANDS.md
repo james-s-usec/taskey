@@ -102,12 +102,34 @@ go clean -modcache
 
 ### Starting Development
 ```bash
-# Run server (auto-reloads on save with tools like air)
+# Run server directly (blocks terminal)
 go run cmd/server/main.go
 
-# Or build and run binary
+# Run server in background
+go run cmd/server/main.go &
+
+# Build and run binary
 go build -o bin/taskey cmd/server/main.go
 ./bin/taskey
+
+# Run on different port using environment variable
+PORT=3000 go run cmd/server/main.go
+```
+
+### Managing Running Servers
+```bash
+# Find what's using a port
+lsof -i :6000
+
+# Kill process by port
+lsof -ti:6000 | xargs kill
+
+# Kill Go processes by name
+pkill -f "go run cmd/server/main.go"
+pkill -f "taskey"
+
+# Check if port is available
+nc -z localhost 6000 && echo "Port in use" || echo "Port available"
 ```
 
 ### Adding Dependencies
