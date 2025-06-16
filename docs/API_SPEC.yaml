@@ -1,0 +1,521 @@
+openapi: 3.0.3
+info:
+  title: Taskey API
+  description: Mental load fantasy draft app for couples
+  version: 1.0.0
+  contact:
+    name: Taskey Team
+    url: https://github.com/james-s-usec/taskey
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Development server
+  - url: https://api.taskey.app/v1
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  # Authentication
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current user info
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Tasks
+  /tasks:
+    get:
+      tags: [Tasks]
+      summary: Get all tasks for household
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, completed, all]
+          description: Filter tasks by status
+        - in: query
+          name: assigned_to
+          schema:
+            type: integer
+          description: Filter tasks by assignee
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Tasks]
+      summary: Create new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /tasks/{id}:
+    get:
+      tags: [Tasks]
+      summary: Get specific task
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Tasks]
+      summary: Update task
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Tasks]
+      summary: Delete task
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Task deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tasks/{id}/complete:
+    patch:
+      tags: [Tasks]
+      summary: Mark task as complete
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Task marked complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Drafts
+  /drafts:
+    get:
+      tags: [Drafts]
+      summary: Get draft history
+      responses:
+        '200':
+          description: List of drafts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Draft'
+
+    post:
+      tags: [Drafts]
+      summary: Create new draft session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDraftRequest'
+      responses:
+        '201':
+          description: Draft session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Draft'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        household_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - email
+        - name
+        - household_id
+        - created_at
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [cleaning, errands, planning, cooking, maintenance, childcare, other]
+        points:
+          type: integer
+          minimum: 1
+          maximum: 10
+        assigned_to:
+          type: integer
+          nullable: true
+        created_by:
+          type: integer
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        completed:
+          type: boolean
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        recurring:
+          type: string
+          enum: [none, daily, weekly, monthly]
+        household_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - category
+        - points
+        - created_by
+        - completed
+        - recurring
+        - household_id
+        - created_at
+        - updated_at
+
+    Draft:
+      type: object
+      properties:
+        id:
+          type: integer
+        household_id:
+          type: integer
+        draft_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [pending, active, completed, cancelled]
+        current_pick:
+          type: integer
+          description: Current pick order (1-based)
+        picks:
+          type: array
+          items:
+            $ref: '#/components/schemas/DraftPick'
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - household_id
+        - draft_date
+        - status
+        - current_pick
+        - picks
+        - created_at
+
+    DraftPick:
+      type: object
+      properties:
+        pick_order:
+          type: integer
+        user_id:
+          type: integer
+        task_id:
+          type: integer
+        picked_at:
+          type: string
+          format: date-time
+      required:
+        - pick_order
+        - user_id
+        - task_id
+        - picked_at
+
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+        household_name:
+          type: string
+          description: Create new household or leave empty to join existing
+      required:
+        - email
+        - password
+        - name
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+        - token
+        - user
+
+    CreateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [cleaning, errands, planning, cooking, maintenance, childcare, other]
+        points:
+          type: integer
+          minimum: 1
+          maximum: 10
+        due_date:
+          type: string
+          format: date
+        recurring:
+          type: string
+          enum: [none, daily, weekly, monthly]
+          default: none
+      required:
+        - title
+        - category
+        - points
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [cleaning, errands, planning, cooking, maintenance, childcare, other]
+        points:
+          type: integer
+          minimum: 1
+          maximum: 10
+        due_date:
+          type: string
+          format: date
+        recurring:
+          type: string
+          enum: [none, daily, weekly, monthly]
+
+    CreateDraftRequest:
+      type: object
+      properties:
+        draft_date:
+          type: string
+          format: date
+        task_pool:
+          type: array
+          items:
+            type: integer
+          description: Array of task IDs available for drafting
+      required:
+        - draft_date
+        - task_pool
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+      required:
+        - error
+        - message
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Conflict:
+      description: Resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
