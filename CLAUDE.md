@@ -13,15 +13,19 @@
 - **Development**: docs/COMMIT_GUIDELINES.md, docs/README.md
 
 ## Tech Stack
-- **Backend**: Express.js + SQLite
-- **Frontend**: React
-- **Mobile**: React Native (future)
-- **Auth**: JWT or session-based
-- **Database**: SQLite (simple, file-based)
+- **Application**: Go web server (single binary)
+- **Templates**: Templ for type-safe HTML generation
+- **Interactivity**: HTMX for dynamic updates
+- **Database**: SQLite with database/sql
+- **Auth**: Session-based with secure cookies
+- **Styling**: Tailwind CSS for responsive design
+- **Mobile**: Responsive web app + PWA features
 
 ## Project Context
 - Solo developer with AI assistance
 - Mental load fantasy draft app for couples
 - Fantasy football-style drafting of household tasks
+- Single Go binary for web + mobile (responsive)
+- Real-time draft features with WebSockets
 - Calendar integration for task display
 - Gamification with points and achievements

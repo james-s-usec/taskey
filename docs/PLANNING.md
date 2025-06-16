@@ -1,11 +1,14 @@
 # Taskey - Mental Load Fantasy Draft App
 
 ## Tech Stack Decision
-- **Backend**: Express.js + SQLite (simple, file-based)
-- **Frontend**: React 
-- **Mobile**: React Native (code reuse)
-- **Auth**: Simple JWT or session-based
-- **Deployment**: Easy options (Vercel, Railway, etc.)
+- **Application**: Go web server (single binary)
+- **Templates**: Templ for type-safe HTML generation
+- **Interactivity**: HTMX for dynamic updates
+- **Database**: SQLite (simple, file-based)
+- **Auth**: Session-based with secure cookies
+- **Styling**: Tailwind CSS for responsive design
+- **Mobile**: Responsive web app + PWA features
+- **Deployment**: Single binary deployment anywhere
 
 ## Core Concept
 Fantasy football-style draft system for household tasks and mental load between spouses.
