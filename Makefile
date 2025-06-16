@@ -34,6 +34,20 @@ run:
 	@echo "🚀 Running $(BINARY_NAME)..."
 	@./$(BUILD_DIR)/$(BINARY_NAME)
 
+## run-simple: Run simple version (no graceful shutdown) 
+run-simple:
+	@echo "🚀 Running simple server..."
+	@go run cmd/server/simple_main.go
+
+## test-quick: Quick test with simple server
+test-quick:
+	@echo "🧪 Quick test cycle..."
+	@go run cmd/server/simple_main.go & \
+	SERVER_PID=$$!; \
+	sleep 2; \
+	curl -s http://localhost:6000/health | grep "healthy" && echo "✅ Health check passed" || echo "❌ Health check failed"; \
+	kill $$SERVER_PID 2>/dev/null || true
+
 ## clean: Clean build artifacts
 clean:
 	@echo "🧹 Cleaning build artifacts..."
@@ -41,10 +55,29 @@ clean:
 	@go clean
 	@echo "✅ Clean complete"
 
-## test: Run all tests
-test:
-	@echo "🧪 Running tests..."
+## test: Run all tests (unit + integration)
+test: test-unit test-integration
+
+## test-unit: Run unit tests only
+test-unit:
+	@echo "🧪 Running unit tests..."
 	@go test -v ./...
+
+## test-integration: Run integration tests (requires running server)
+test-integration:
+	@echo "🧪 Running integration tests..."
+	@./scripts/simple-test.sh
+
+## test-dev: Build, start server, run tests, stop server
+test-dev: build
+	@echo "🧪 Running full development test cycle..."
+	@./scripts/dev.sh $(DEFAULT_PORT) & \
+	SERVER_PID=$$!; \
+	sleep 2; \
+	./scripts/test-server.sh; \
+	TEST_RESULT=$$?; \
+	kill $$SERVER_PID 2>/dev/null || true; \
+	exit $$TEST_RESULT
 
 ## fmt: Format Go code
 fmt:
